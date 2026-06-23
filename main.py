@@ -4,9 +4,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from methods.MultiAgentEvaluation.main import MultiAgentEvaluation
-from methods.PromptEvaluation.main import PromptEvaluator
-from utils.model_config import ModelManager
+from src.methods.multi_agent_eval import MultiAgentEvaluation
+from src.methods.prompt_eval import PromptEvaluator
+from src.utils.model_manager import ModelManager
 
 logging.basicConfig(
     level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"

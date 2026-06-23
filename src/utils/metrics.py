@@ -63,7 +63,7 @@ def cost_per_method(metrics):
     return metrics
 
 
-def context_calculate_accuracy(result_list, multi_agent=False):
+def calculate_accuracy(result_list, multi_agent=False):
     # Check if the result_list is empty
     if not result_list:
         return {}

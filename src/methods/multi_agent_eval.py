@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 import time
 import traceback
 from collections import Counter
@@ -13,14 +12,17 @@ from azure.ai.inference.models import SystemMessage
 from json_repair import repair_json
 
 # LangChain
-from langchain.output_parsers import PydanticOutputParser
+from langchain_classic.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from utils.scores import context_calculate_accuracy
+from src.utils.metrics import calculate_accuracy
 
-from .utils import (
+from src.utils.schemas import (
     ContextOutput,
     ContextOutputRoundtable,
+)
+
+from src.utils.prompts import (    
     context_understanding_agent_definitions,
     context_understanding_prompt_template,
     context_understanding_roundtable_cot_5,
@@ -657,7 +659,7 @@ class MultiAgentEvaluation:
         }
         self.append_to_json_file(info)
         logging.critical(
-            f"Accuracy scores: {context_calculate_accuracy(self.open_json(self.output_path), multi_agent=True)}"
+            f"Accuracy scores: {calculate_accuracy(self.open_json(self.output_path), multi_agent=True)}"
         )
 
     # Main function

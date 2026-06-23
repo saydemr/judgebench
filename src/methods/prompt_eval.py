@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 import time
 import traceback
 from collections import Counter
@@ -11,17 +10,19 @@ from pathlib import Path
 import numpy as np
 from azure.ai.inference.models import SystemMessage
 from json_repair import repair_json
-from langchain.output_parsers import PydanticOutputParser
+from langchain_classic.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from utils.scores import context_calculate_accuracy
+from src.utils.metrics import calculate_accuracy
 
-from .utils import (
+from src.utils.schemas import (
     ContextOutput,
     GPSData,
     OpeningHours,
     SystemBlockInput,
     UserBlockInput,
+)
+from .utils.prompts import (
     cot_1_new,
     cot_3_new,
     cot_5_new,
@@ -38,7 +39,6 @@ class PromptEvaluator:
         self,
         llm,
         method,
-        testing,
         input_path: Path,
         output_path: Path,
         self_consistency=False,
@@ -446,7 +446,7 @@ class PromptEvaluator:
         }
         self.append_to_json_file(info)
         logging.critical(
-            f"Accuracy scores: {context_calculate_accuracy(self.open_json(self.output_path), multi_agent=False)}"
+            f"Accuracy scores: {calculate_accuracy(self.open_json(self.output_path), multi_agent=False)}"
         )
 
     # Main function
