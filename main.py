@@ -20,12 +20,6 @@ def main():
     )
     ### Base
     parser.add_argument(
-        "--testing",
-        choices=["implicit_understanding", "context_understanding"],
-        required=True,
-        help="The dataset to use for evaluation.",
-    )
-    parser.add_argument(
         "--method",
         required=True,
         choices=[
@@ -101,16 +95,9 @@ def main():
     )
 
     args = parser.parse_args()
-
-    # Set the dataset path based on the selected dataset
-    if args.testing == "implicit_understanding":
-        data_path = "data/implicit_understanding/utterance_dataset.json"
-        # data_path = "data/implicit_understanding/test.json"
-        dataset_name = "implicit_understanding"
-    elif args.testing == "context_understanding":
-        data_path = "data/context_understanding/dataset.json"
-        # data_path = "data/context_understanding/test.json"
-        dataset_name = "context_understanding"
+    data_path = "data/context_understanding/dataset.json"
+    # data_path = "data/context_understanding/test.json"
+    dataset_name = "context_understanding"
 
     method_shortcuts = {
         "input_output": "IO",
@@ -189,7 +176,6 @@ def main():
         evaluator = PromptEvaluator(
             llm=llm,
             method=args.method,
-            testing=args.testing,
             input_path=data_path,
             output_path=output_path,
             self_consistency=args.self_consistency,
@@ -269,7 +255,6 @@ def main():
 
         evaluator = MultiAgentEvaluation(
             agent_llms=created_agent_llms,
-            testing=args.testing,
             input_path=data_path,
             output_path=output_path,
             method=args.method,

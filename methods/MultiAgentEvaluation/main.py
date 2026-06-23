@@ -16,19 +16,14 @@ from json_repair import repair_json
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from utils.scores import context_calculate_accuracy, implicit_calculate_accuracy
+from utils.scores import context_calculate_accuracy
 
 from .utils import (
     ContextOutput,
     ContextOutputRoundtable,
-    ImplicitOutput,
-    ImplicitOutputRoundtable,
     context_understanding_agent_definitions,
     context_understanding_prompt_template,
     context_understanding_roundtable_cot_5,
-    implicit_understanding_agent_definitions,
-    implicit_understanding_prompt_template,
-    implicit_understanding_prompt_template_roundtable_cot,
 )
 
 logging.basicConfig(
@@ -47,7 +42,6 @@ class MultiAgentEvaluation:
         discussion_loops=1,
     ):
         self.agent_llms = agent_llms
-        self.testing = testing
         self.input_path = input_path
         self.output_path = output_path
         self.token_json_path = output_path.parent / Path(
@@ -78,69 +72,24 @@ class MultiAgentEvaluation:
         """
         Tries to correct common mistakes from LLM output and transform decision strings to boolean
         """
-        if self.testing == "implicit_understanding":
-            try:
-                # Replace Python boolean values with JSON boolean values
-                content = input.replace("True", "true").replace("False", "false")
-                # Remove whitespaces at the beginning and end
-                content = content.strip()
+        try:
+            cleaned_input = input.replace("```json", "").replace("```", "").strip()
+            cleaned_input = cleaned_input.replace("\\'", "'")
+            # Load the input JSON
+            answer = json.loads(cleaned_input)
 
-                # Remove any text that is outside the JSON structure
-                content = re.sub(r"^[^{]*", "", content)
-                content = re.sub(r"[^}]*$", "", content)
+            # Transform decision
+            if "decision" in answer:
+                if isinstance(answer["decision"], str):
+                    if answer["decision"].lower() == "true":
+                        answer["decision"] = True
+                    elif answer["decision"].lower() == "false":
+                        answer["decision"] = False
 
-                # Ensure that property names are enclosed in double quotes
-                content = re.sub(r"(\w+):", r'"\1":', content)
-
-                # Remove unnecessary line breaks
-                content = content.replace("\n", "")
-
-                # Ensure that the content starts with '{' and ends with '}'
-                if not content.startswith("{"):
-                    content = "{" + content
-                if not content.endswith("}"):
-                    content += "}"
-
-                # Try to parse the JSON
-                answer = json.loads(content)
-
-                # Transform decision
-                if "decision" in answer:
-                    if isinstance(answer["decision"], str):
-                        if answer["decision"].lower() == "true":
-                            answer["decision"] = True
-                        elif answer["decision"].lower() == "false":
-                            answer["decision"] = False
-
-            except json.JSONDecodeError as e:
-                logging.error("JSON Decode Error:", e)
-                logging.error("Original content:", input)
-                logging.error("Modified content:", content)
-                return None
-
-        elif self.testing == "context_understanding":
-            try:
-                # print(type(input))
-                # print(input)
-                cleaned_input = input.replace("```json", "").replace("```", "").strip()
-                cleaned_input = cleaned_input.replace("\\'", "'")
-                # print(cleaned_input)
-                # print(type(cleaned_input))
-                # Load the input JSON
-                answer = json.loads(cleaned_input)
-
-                # Transform decision
-                if "decision" in answer:
-                    if isinstance(answer["decision"], str):
-                        if answer["decision"].lower() == "true":
-                            answer["decision"] = True
-                        elif answer["decision"].lower() == "false":
-                            answer["decision"] = False
-
-            except json.JSONDecodeError as e:
-                logging.error("JSON Decode Error:", e)
-                logging.error("Original content:", input)
-                return None
+        except json.JSONDecodeError as e:
+            logging.error("JSON Decode Error:", e)
+            logging.error("Original content:", input)
+            return None
 
         return answer
 
@@ -156,56 +105,49 @@ class MultiAgentEvaluation:
         Creates input dict for invoke agents
         """
 
-        if self.testing == "implicit_understanding":
-            return {
-                "user_utterance": user_utterance,
-                "previous_arguments": previous_arguments,
-                "format_instructions": format_instructions,
-            }
 
-        elif self.testing == "context_understanding":
-            return {
-                # User Block data
-                "current_gps_user_block_lat": user_block["context"]["location"][
-                    "latitude"
-                ],
-                "current_gps_user_block_long": user_block["context"]["location"][
-                    "longitude"
-                ],
-                "current_gps_user_block_desc": user_block["context"]["location"][
-                    "description"
-                ],
-                "date": user_block["context"]["date"],
-                "time": user_block["context"]["time"],
-                "user_utterance": user_block["user_utterance"]["utterance"],
-                # System Block data
-                "name": system_block["system_block"]["name"],
-                "current_gps_system_block_lat": system_block["system_block"][
-                    "current_gps"
-                ]["latitude"],
-                "current_gps_system_block_long": system_block["system_block"][
-                    "current_gps"
-                ]["longitude"],
-                "current_gps_system_block_desc": system_block["system_block"][
-                    "current_gps"
-                ]["description"],
-                "cuisine_type": system_block["system_block"]["cuisine_type"],
-                "menu": system_block["system_block"]["menu"],
-                "cost": system_block["system_block"]["cost"],
-                "rating": system_block["system_block"]["rating"],
-                "monday": system_block["system_block"]["opening_hours"]["monday"],
-                "tuesday": system_block["system_block"]["opening_hours"]["tuesday"],
-                "wednesday": system_block["system_block"]["opening_hours"]["wednesday"],
-                "thursday": system_block["system_block"]["opening_hours"]["thursday"],
-                "friday": system_block["system_block"]["opening_hours"]["friday"],
-                "saturday": system_block["system_block"]["opening_hours"]["saturday"],
-                "sunday": system_block["system_block"]["opening_hours"]["sunday"],
-                "distance_km": system_block["system_block"]["distance_km"],
-                "duration_min": system_block["system_block"]["duration_min"],
-                # Additional arguments
-                "previous_arguments": previous_arguments,
-                "format_instructions": format_instructions,
-            }
+        return {
+            # User Block data
+            "current_gps_user_block_lat": user_block["context"]["location"][
+                "latitude"
+            ],
+            "current_gps_user_block_long": user_block["context"]["location"][
+                "longitude"
+            ],
+            "current_gps_user_block_desc": user_block["context"]["location"][
+                "description"
+            ],
+            "date": user_block["context"]["date"],
+            "time": user_block["context"]["time"],
+            "user_utterance": user_block["user_utterance"]["utterance"],
+            # System Block data
+            "name": system_block["system_block"]["name"],
+            "current_gps_system_block_lat": system_block["system_block"][
+                "current_gps"
+            ]["latitude"],
+            "current_gps_system_block_long": system_block["system_block"][
+                "current_gps"
+            ]["longitude"],
+            "current_gps_system_block_desc": system_block["system_block"][
+                "current_gps"
+            ]["description"],
+            "cuisine_type": system_block["system_block"]["cuisine_type"],
+            "menu": system_block["system_block"]["menu"],
+            "cost": system_block["system_block"]["cost"],
+            "rating": system_block["system_block"]["rating"],
+            "monday": system_block["system_block"]["opening_hours"]["monday"],
+            "tuesday": system_block["system_block"]["opening_hours"]["tuesday"],
+            "wednesday": system_block["system_block"]["opening_hours"]["wednesday"],
+            "thursday": system_block["system_block"]["opening_hours"]["thursday"],
+            "friday": system_block["system_block"]["opening_hours"]["friday"],
+            "saturday": system_block["system_block"]["opening_hours"]["saturday"],
+            "sunday": system_block["system_block"]["opening_hours"]["sunday"],
+            "distance_km": system_block["system_block"]["distance_km"],
+            "duration_min": system_block["system_block"]["duration_min"],
+            # Additional arguments
+            "previous_arguments": previous_arguments,
+            "format_instructions": format_instructions,
+        }
 
     def create_and_invoke_agent_chain(
         self, agent_template, prompt_template, input_dict, agent_llm
@@ -620,92 +562,6 @@ class MultiAgentEvaluation:
                 f"Decisions are not unanimous. Proceeding to round {loop_count + 1} of {self.discussion_loops}."
             )
 
-    def implicit_understanding_multi_turn(self):
-        """
-        Evaluate a full dataset of utterances
-        """
-        start_time = time.time()
-        dataset = self.open_json(self.input_path)
-        token_count_history = self.determine_tokens_used()
-
-        # Set format instructions dependent on method
-        if self.method in ["multi_agent_base", "multi_agent_debate"]:
-            pydantic_parser = PydanticOutputParser(pydantic_object=ImplicitOutput)
-            format_instructions = pydantic_parser.get_format_instructions()
-            prompt_template = implicit_understanding_prompt_template
-        else:
-            pydantic_parser = PydanticOutputParser(
-                pydantic_object=ImplicitOutputRoundtable
-            )
-            format_instructions = pydantic_parser.get_format_instructions()
-            prompt_template = implicit_understanding_prompt_template_roundtable_cot
-
-        # Start loop through dataset
-        for outer_category, categories in dataset.items():
-            for inner_category, utterance_types in categories.items():
-                for utterance_type, utterances in utterance_types.items():
-                    for utterance in utterances:
-                        try:
-                            decision, single_turn_token_usage = (
-                                self.multi_agent_single_turn(
-                                    user_utterance=utterance,
-                                    agents=implicit_understanding_agent_definitions,
-                                    format_instructions=format_instructions,
-                                    use_case_template=prompt_template,
-                                )
-                            )
-
-                            # Accumulate token counts per model
-                            for model, tokens in single_turn_token_usage.items():
-                                if model in token_count_history:
-                                    token_count_history[model]["input_tokens"] += (
-                                        tokens.get("input_tokens", 0)
-                                    )
-                                    token_count_history[model]["output_tokens"] += (
-                                        tokens.get("output_tokens", 0)
-                                    )
-
-                            decision["outer_category"] = outer_category
-                            decision["inner_category"] = inner_category
-                            decision["utterance_type"] = utterance_type
-
-                            self.append_to_json_file(decision)
-
-                            logging.info(
-                                f"Evaluated utterance in category {inner_category} - Passed time: {self.passed_time(start_time)}"
-                            )
-
-                        except Exception as e:
-                            logging.error(
-                                f"Error in category {inner_category} - {str(e)}"
-                            )
-                            logging.error(f"LLM Output: {decision}")
-                            logging.error(traceback.format_exc())
-
-        # Save important facts and append at the end of list
-        info = {
-            "testing_date": datetime.now().strftime("%d/%m/%Y"),
-            "time": self.passed_time(start_time, logging=False),
-            "token_information": token_count_history,
-            "agent_deployment_names": [
-                (
-                    llm.deployment_name
-                    if hasattr(llm, "deployment_name")
-                    else llm.get_model_info().model_name
-                    if hasattr(llm, "get_model_info")
-                    else llm.model_name
-                    if hasattr(llm, "model_name")
-                    else "unknown"
-                )
-                for llm in self.agent_llms
-            ],
-            "testing": self.testing,
-        }
-        self.append_to_json_file(info)
-        logging.critical(
-            f"Accuracy scores: {implicit_calculate_accuracy(self.open_json(self.output_path), multi_agent=True)}"
-        )
-
     def context_understanding_multi_turn(self):
         """
         Evaluate a full dataset of user and system blocks
@@ -798,7 +654,6 @@ class MultiAgentEvaluation:
                 else "unknown"
                 for llm in self.agent_llms
             ],
-            "testing": self.testing,
         }
         self.append_to_json_file(info)
         logging.critical(
@@ -807,7 +662,4 @@ class MultiAgentEvaluation:
 
     # Main function
     def run_evaluation(self):
-        if self.testing == "implicit_understanding":
-            self.implicit_understanding_multi_turn()
-        elif self.testing == "context_understanding":
-            self.context_understanding_multi_turn()
+        self.context_understanding_multi_turn()

@@ -14,16 +14,11 @@ from json_repair import repair_json
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from utils.scores import context_calculate_accuracy, implicit_calculate_accuracy
+from utils.scores import context_calculate_accuracy
 
 from .utils import (
     ContextOutput,
-    CoT_implicit_understanding_prompt_template_five_shot,
-    CoT_implicit_understanding_prompt_template_one_shot,
-    CoT_implicit_understanding_prompt_template_three_shot,
     GPSData,
-    ImplicitOutput,
-    IO_implicit_understanding_prompt_template,
     OpeningHours,
     SystemBlockInput,
     UserBlockInput,
@@ -52,7 +47,6 @@ class PromptEvaluator:
     ):
         self.llm = llm
         self.method = method
-        self.testing = testing
         self.input_path = input_path
         self.output_path = output_path
         self.token_json_path = output_path.parent / Path(
@@ -84,76 +78,34 @@ class PromptEvaluator:
         """
         Tries to correct common mistakes from LLM output and transform decision strings to boolean
         """
-        # input = repair_json(input)
-        if self.testing == "implicit_understanding":
-            try:
-                # Replace Python boolean values with JSON boolean values
-                content = input.replace("True", "true").replace("False", "false")
-                # Remove whitespaces at the beginning and end
-                content = content.strip()
+        try:
+            # Handle the case where input is wrapped in code block notation ```
+            if input.startswith("```") and input.endswith("```"):
+                input = input.strip("```").strip()
 
-                # Remove any text that is outside the JSON structure
-                content = re.sub(r"^[^{]*", "", content)
-                content = re.sub(r"[^}]*$", "", content)
+            # Remove 'json\n' prefix if it exists
+            if input.startswith("json\n"):
+                input = input[len("json\n") :]
 
-                # Ensure that property names are enclosed in double quotes
-                content = re.sub(r"(\w+):", r'"\1":', content)
+            # Ensure the input is valid JSON by checking the first and last characters
+            if not (input.startswith("{") and input.endswith("}")):
+                raise ValueError("Input does not appear to be valid JSON.")
 
-                # Remove unnecessary line breaks
-                content = content.replace("\n", "")
+            # Load the input JSON
+            answer = json.loads(input)
 
-                # Ensure that the content starts with '{' and ends with '}'
-                if not content.startswith("{"):
-                    content = "{" + content
-                if not content.endswith("}"):
-                    content += "}"
+            # Transform decision
+            if "decision" in answer:
+                if isinstance(answer["decision"], str):
+                    if answer["decision"].lower() == "true":
+                        answer["decision"] = True
+                    elif answer["decision"].lower() == "false":
+                        answer["decision"] = False
 
-                # Try to parse the JSON
-                answer = json.loads(content)
-
-                # Transform decision
-                if "decision" in answer:
-                    if isinstance(answer["decision"], str):
-                        if answer["decision"].lower() == "true":
-                            answer["decision"] = True
-                        elif answer["decision"].lower() == "false":
-                            answer["decision"] = False
-
-            except json.JSONDecodeError as e:
-                logging.error("JSON Decode Error:", e)
-                logging.error("Original content:", input)
-                logging.error("Modified content:", content)
-                return None
-
-        elif self.testing == "context_understanding":
-            try:
-                # Handle the case where input is wrapped in code block notation ```
-                if input.startswith("```") and input.endswith("```"):
-                    input = input.strip("```").strip()
-
-                # Remove 'json\n' prefix if it exists
-                if input.startswith("json\n"):
-                    input = input[len("json\n") :]
-
-                # Ensure the input is valid JSON by checking the first and last characters
-                if not (input.startswith("{") and input.endswith("}")):
-                    raise ValueError("Input does not appear to be valid JSON.")
-
-                # Load the input JSON
-                answer = json.loads(input)
-
-                # Transform decision
-                if "decision" in answer:
-                    if isinstance(answer["decision"], str):
-                        if answer["decision"].lower() == "true":
-                            answer["decision"] = True
-                        elif answer["decision"].lower() == "false":
-                            answer["decision"] = False
-
-            except json.JSONDecodeError as e:
-                logging.error("JSON Decode Error:", e)
-                logging.error("Original content:", input)
-                return None
+        except json.JSONDecodeError as e:
+            logging.error("JSON Decode Error:", e)
+            logging.error("Original content:", input)
+            return None
 
         return answer
 
@@ -223,216 +175,6 @@ class PromptEvaluator:
 
         json.dump(token_usage, open(self.token_json_path, "w"), indent=4)
 
-    # Tests implicit understanding
-    def implicit_understanding_single_turn(self, user_utterance):
-        """
-        Evaluates a single user utterance for implicit understanding KPI.
-        """
-        pydantic_parser = PydanticOutputParser(pydantic_object=ImplicitOutput)
-        format_instructions = pydantic_parser.get_format_instructions()
-
-        # Method template
-        if self.method == "input_output":
-            template = IO_implicit_understanding_prompt_template
-        elif self.method == "chain_of_thought":
-            if self.cot_shots == 1:
-                template = CoT_implicit_understanding_prompt_template_one_shot
-            elif self.cot_shots == 3:
-                template = CoT_implicit_understanding_prompt_template_three_shot
-            elif self.cot_shots == 5:
-                template = CoT_implicit_understanding_prompt_template_five_shot
-
-        # Generate prompt using template and input
-        prompt = ChatPromptTemplate.from_template(template=template)
-        filled_prompt_template = prompt.format_messages(
-            user_utterance=user_utterance, format_instructions=format_instructions
-        )
-
-        # Determine the LLM model name (for both OpenAI and non-OpenAI models)
-        llm_model_name = (
-            self.llm.deployment_name
-            if hasattr(self.llm, "deployment_name")
-            else self.llm.get_model_info().model_name
-            if hasattr(self.llm, "get_model_info")
-            else self.llm.model_name
-            if hasattr(self.llm, "model_name")
-            else "unknown"
-        )
-
-        max_tries = 5
-        attempts = 0
-        cleaned_json = None
-
-        # While loop for possible parsing or generation errors
-        while attempts < max_tries:
-            attempts += 1
-
-            # Run for both OpenAI and non-OpenAI models
-            if llm_model_name in [
-                "gpt-35-turbo-1106",
-                "gpt-35-turbo",
-                "gpt-4",
-                "gpt-4.1",
-                "gpt-4o",
-                "gpt-4o-mini",
-                "o4-mini",
-                "o3-mini",
-                "o3",
-                "o1",
-                "DeepSeek-R1-qcbar",
-                "DeepSeek-V3-0324",
-            ]:
-                output = self.llm.invoke(filled_prompt_template)
-
-                cleaned_json = repair_json(output.content, return_objects=True)
-                if isinstance(cleaned_json, list):
-                    cleaned_json = max(cleaned_json, key=len)
-
-            else:
-                messages = [SystemMessage(content=str(filled_prompt_template))]
-                output = self.llm.complete(messages=messages)
-                cleaned_json = self.json_parser_correction(
-                    output["choices"][0]["message"]["content"]
-                )
-
-            if cleaned_json is not None:
-                break
-            else:
-                logging.error(f"Attempt {attempts} failed to generate valid JSON.")
-
-        if cleaned_json is None:
-            logging.error("Failed to generate valid JSON after maximum attempts.")
-
-        cleaned_json["llm_model"] = llm_model_name
-
-        # Token usage for OpenAI models
-        if llm_model_name in [
-            "gpt-35-turbo-1106",
-            "gpt-35-turbo",
-            "gpt-4",
-            "gpt-4.1",
-            "gpt-4o",
-            "gpt-4o-mini",
-            "o4-mini",
-            "o3-mini",
-            "o3",
-            "o1",
-            "DeepSeek-R1-qcbar",
-            "DeepSeek-V3-0324",
-        ]:
-            tokens = {
-                "input_tokens": output.response_metadata["token_usage"].get(
-                    "prompt_tokens", 0
-                ),
-                "output_tokens": output.response_metadata["token_usage"].get(
-                    "completion_tokens", 0
-                ),
-                "model": llm_model_name,
-            }
-        else:
-            tokens = {
-                "input_tokens": output["usage"].get("prompt_tokens", 0),
-                "output_tokens": output["usage"].get("completion_tokens", 0),
-                "model": llm_model_name,
-            }
-
-        return cleaned_json, tokens
-
-    def implicit_understanding_multi_turn(self):
-        """
-        Evaluate a full dataset of utterances
-        """
-        start_time = time.time()
-        token_count_history = self.determine_tokens_used()
-        dataset = self.open_json(self.input_path)
-
-        for outer_category, categories in dataset.items():
-            for inner_category, utterance_types in categories.items():
-                for utterance_type, utterances in utterance_types.items():
-                    for utterance_idx, utterance in enumerate(utterances):
-                        try:
-                            self_consistency_list = []
-                            loops = self.loops if self.self_consistency else 1
-
-                            for _ in range(loops):
-                                llm_decision, tokens = (
-                                    self.implicit_understanding_single_turn(utterance)
-                                )
-                                self_consistency_list.append(llm_decision)
-                                # Update token count history for the specific model
-                                llm_model_name = tokens["model"]
-                                token_count_history[llm_model_name]["input_tokens"] += (
-                                    tokens["input_tokens"]
-                                )
-                                token_count_history[llm_model_name][
-                                    "output_tokens"
-                                ] += tokens["output_tokens"]
-
-                            if self.self_consistency:
-                                sample_decision_list = [
-                                    entry["decision"] for entry in self_consistency_list
-                                ]
-                                decision_count = Counter(sample_decision_list)
-                                max_vote = decision_count.most_common(1)[0]
-                                max_count = max_vote[1]
-                                ratio = max_count / self.loops
-
-                                # Collect reasonings
-                                reasonings = [
-                                    entry["reasoning"]
-                                    for entry in self_consistency_list
-                                ]
-                                combined_reasoning = " ".join(reasonings)
-
-                                decision = {
-                                    "utterance": utterance,
-                                    "decision": max_vote[0],
-                                    "ratio": np.round(ratio, 2),
-                                    "reasoning": combined_reasoning,
-                                    "utterance_type": utterance_type,
-                                    "outer_category": outer_category,
-                                    "inner_category": inner_category,
-                                }
-                            else:
-                                decision = {
-                                    "utterance": utterance,
-                                    "decision": self_consistency_list[0]["decision"],
-                                    "reasoning": self_consistency_list[0]["reasoning"],
-                                    "utterance_type": utterance_type,
-                                    "outer_category": outer_category,
-                                    "inner_category": inner_category,
-                                }
-
-                            self.append_to_json_file(decision)
-                            logging.info(
-                                f"Evaluated utterance of type {utterance_type} in category {inner_category} - Passed time: {self.passed_time(start_time)}"
-                            )
-
-                        except Exception as e:
-                            logging.error(
-                                f"Error in type {utterance_type} in category {inner_category} - {str(e)}"
-                            )
-                            # logging.error(f"LLM Output: {llm_decision}")
-                            logging.error(traceback.format_exc())
-
-        info = {
-            "testing_date": datetime.now().strftime("%d/%m/%Y"),
-            "time": self.passed_time(start_time, logging=False),
-            "token_count_history": token_count_history,
-            "deployment_name": (
-                self.llm.deployment_name
-                if hasattr(self.llm, "deployment_name")
-                else self.llm.get_model_info().model_name
-                if hasattr(self.llm, "get_model_info")
-                else self.llm.model_name
-                if hasattr(self.llm, "model_name")
-                else "unknown"
-            ),
-        }
-        self.append_to_json_file(info)
-        logging.critical(
-            f"Accuracy scores: {implicit_calculate_accuracy(self.open_json(self.output_path))}"
-        )
 
     # Tests context understanding
     def context_understanding_single_turn(self, user_block, system_block):
@@ -709,7 +451,4 @@ class PromptEvaluator:
 
     # Main function
     def run_evaluation(self):
-        if self.testing == "implicit_understanding":
-            self.implicit_understanding_multi_turn()
-        elif self.testing == "context_understanding":
-            self.context_understanding_multi_turn()
+        self.context_understanding_multi_turn()

@@ -1,93 +1,6 @@
 from pydantic import BaseModel, Field
 
 
-# Implicit understanding
-class ImplicitOutput(BaseModel):
-    decision: str = Field(
-        ...,
-        description="Assess whether utterance is navigational request 'true' or not 'false'",
-    )
-    reasoning: str = Field(
-        ...,
-        description="Give only 2 precise and most important argumentes why or why not the utterance should lead to rerouting or not. If there are previous arguments, please consider them!",
-    )
-
-
-class ImplicitOutputRoundtable(BaseModel):
-    decision: str = Field(
-        ...,
-        description="Assess whether utterance is navigational request 'true' or not 'false'",
-    )
-    reasoning: str = Field(
-        ..., description="Please answer the question with step-by-step rasoning"
-    )
-    confidence: float = Field(
-        ...,
-        description="Evaluate your confidence level (between 0.0 and 1.0) to indicate the possibility of your answer being right",
-    )
-
-
-implicit_understanding_prompt_template = """
-    The context is that the user is currently sitting in the car. Your task is to determine whether the user, based on the given utterance, wants to be rerouted to a different location or not.
-    
-    User utterance: "{user_utterance}"
-    
-    Based on your persona and characteristics, decide whether the utterance indicates a need for rerouting to another location or not. 
-
-    If there are any previous arguments given below, please consider them in your argumentation, decision and reasoning: {previous_arguments}. 
-
-    Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect.
-    {format_instructions}. Make sure you follow the format instructions and that your output is a valid JSON! It is very very important!
-"""
-implicit_understanding_prompt_template_roundtable = """
-    The context is that the user is currently sitting in the car. Your task is to determine whether the user, based on the given utterance, wants to be rerouted to a different location or not.
-    
-    User utterance: "{user_utterance}"
-    
-    If there are any previous arguments given below, please carefully review the following solutions from other agents as additional information, and provide your own answer and step-by-step reasoning to the question.
-    Cleary state which point of view you agree or disagree with and why:
-    Previous arguments: {previous_arguments}. 
-
-    Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect.
-    {format_instructions}. Make sure you follow the format instructions and that your output is a valid JSON! It is very very important!!!!! Make sure to not make this parsing error: Message: 'Modified content:'
-    Arguments: ('{  "decision": "true",  "reasoning": "1. The utterance \'Direct me to the train station to the city center\' explicitly mentions a specific "location": the train station in the city center. \\n2. The phrase \'Direct me to\' is a clear navigational command, indicating the user wants to be guided to a different location. \\n3. The context of being in a car further supports the interpretation that the user is requesting navigation assistance.",  "confidence": 1.0}',)
-"""
-implicit_understanding_prompt_template_roundtable_cot = """
-    The context is that the user is currently sitting in the car. Your task is to determine whether the user, based on the given utterance, wants to be rerouted to a different location or not.
-    
-    User utterance: "{user_utterance}"
-
-    The following examples and reasoning steps are provided to help you understand how to make this decision. 
-
-    Example 1:
-    - Utterance: "I am hungry."
-    - Reasoning Steps:
-        1. The statement expresses a personal feeling of hunger, which is not directly navigational.
-        2. However, expressing hunger while in a car suggests a potential desire to find a place to eat.
-        3. The context and likely intent to find food make it reasonable to interpret this as an indirect navigational request, prompting suggestions for nearby eateries.
-
-    Example 2: 
-    - Utterance: "Will I need a coat later?"
-    - Reasoning Steps:
-        1. This question pertains to weather appropriateness and clothing advice, focusing solely on the user's personal preparation for the weather.
-        2. Like the previous example, there is no indication of a need for travel or location information, making it clear that this is not a navigational request.
-
-    Example 3:
-    - Utterance: “My pocket is empty.”
-    - Reasoning Steps: 
-        1. The statement “My pocket is empty” metaphorically indicates that the user has no money or lacks financial resources at the moment.
-        2. The phrase does not directly ask for a location or action but implies a need to access cash, which typically involves visiting an ATM.
-        3. Although the utterance does not explicitly request to be taken to a bank or ATM, it implies a need to withdraw money, making it an indirect navigational utterance where the likely intent is to navigate to the nearest ATM or bank.
-    
-    If there are any previous arguments given below, please carefully review the following solutions from other agents as additional information, and provide your own answer and step-by-step reasoning to the question.
-    Cleary state which point of view you agree or disagree with and why:
-    Previous arguments: {previous_arguments}. 
-
-    Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect.
-    {format_instructions}. Make sure you follow the format instructions and that your output is a valid JSON! It is very very important!
-
-    Generate your response as valid JSON. Ensure all strings are properly formatted, escaping any special characters such as quotes (") and newlines (\n). The output must strictly follow JSON syntax and be parsable without errors.
-"""
 
 context_understanding_roundtable_cot_5 = """
 
@@ -371,34 +284,6 @@ context_understanding_roundtable_cot_5 = """
 """
 
 # Agents
-implicit_understanding_agent_definitions = {
-    "Detective": """
-        You are Detective Alex Carter, a 45-year-old with 25 years of experience in crime investigation, specializing in uncovering hidden motives and solving complex cases. 
-        You are analytical, intuitive, and persistent in your approach. Your primary role is to dissect every word in the users utterance to find subtle clues that may hint at a navigational intent.
-        You're adept at identifying indirect language, picking up on nuanced phrasing that might otherwise be overlooked. 
-        Whether it is "I feel like throwing some baskets" or "I am in the mood for a few laps," you instinctively sense that these phrases could imply a desire for directions to a basketball court or a swimming pool. 
-        You excel in uncovering hidden navigational needs in ambiguous language, always seeking clarity through careful examination of details. 
-        Your attention to small linguistic cues, combined with your experience in solving mysteries, makes you an expert at identifying when navigation is required, even when the request is not explicit.
-    """,
-    "Therapist": """
-        You are Therapist Sarah Miller, a 38-year-old therapist with 12 years of experience in helping people understand their emotions and underlying desires. 
-        Your role is to focus on the emotional state and implied needs behind user utterances. 
-        You are very empathetic, patient, and highly reflective, always listening closely to understand the users true intent. 
-        You specialize in recognizing emotional cues that may suggest a need for comfort, safety, or a familiar location. 
-        For example, when someone says, "I want to go home" or "I am hungry", you instinctively interpret these as potential navigational requests. 
-        You know that feelings often drive decision-making, and even when the user does not explicitly ask for directions, their underlying emotional state can point toward a need for navigation. 
-        Your calm, supportive nature ensures that users feel understood, and your intuitive grasp of emotional context allows you to infer navigational intent where others might miss it.
-    """,
-    "Marketer": """
-        You are Emily Thompson, a 32-year-old marketing strategist with 10 years of experience in consumer behavior analysis and trend forecasting. 
-        You are strategic, observant, and data-driven, focusing on recognizing patterns in user behavior and predicting their needs. 
-        Your job is to anticipate implicit navigational requests by analyzing indirect statements that could suggest a desire for movement or activity. 
-        For example, when someone says, "I feel like throwing some baskets" or "I am in the mood for a few laps," you infer that the user might be looking for a basketball court or swimming pool, even though they did not explicitly ask for directions. 
-        You rely on patterns of user behavior, common activities, and linguistic trends to predict when a location might be involved. 
-        Your innovative thinking ensures that you recognize potential navigational intent from activities, helping users reach their destinations even when they do not directly ask for it.
-    """,
-}
-
 
 # Context understanding
 class ContextOutput(BaseModel):
@@ -414,7 +299,6 @@ class ContextOutput(BaseModel):
         ...,
         description="Give the category from the following: 'positive', 'location_error', 'time_error', 'cuisine_error', 'cost_error', 'rating_error'",
     )
-
 
 class ContextOutputRoundtable(BaseModel):
     decision: str = Field(

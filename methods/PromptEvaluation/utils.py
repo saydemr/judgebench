@@ -1,18 +1,6 @@
 from pydantic import BaseModel, Field
 
 
-## Implicit Understanding Pydantic Class
-class ImplicitOutput(BaseModel):
-    decision: str = Field(
-        ...,
-        description="Assess whether utterance is navigational request 'true' or not 'false'",
-    )
-    reasoning: str = Field(
-        ...,
-        description="Give a short reason and explanation why or why not the utterance is a navigational request",
-    )
-
-
 ## Context Understanding Pydantic Classes
 class GPSData(BaseModel):
     latitude: float = Field(..., description="Latitude of the restaurant")
@@ -76,15 +64,6 @@ class ContextOutput(BaseModel):
     )
 
 
-## Input Output Prompt Templates
-IO_implicit_understanding_prompt_template = """
-    The context is that the user is currently sitting in the car. Your task is to determine whether the user, based on the given utterance, wants to be rerouted to a different location or not.
-    
-    User utterance: "{user_utterance}"
-
-    Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect.
-    {format_instructions}.
-"""
 IO_context_understanding_prompt_template = """
     You are a critical evaluator tasked with determining whether the information provided by a car navigation system (System Block) aligns correctly with the user's expressed needs in user utterance and user context (User Block). 
 
@@ -136,25 +115,6 @@ IO_context_understanding_prompt_template = """
     {format_instructions}. Make sure the output is always a valid Json format. Make sure the output is always a valid Json format. Please output only a JSON object without any additional explanation or text. Do not include any introductory or concluding remarks. 
 """
 
-## Chain of Thought Prompt Templates
-# 1 navigational example
-CoT_implicit_understanding_prompt_template_one_shot = """
-    The context is that the user is currently sitting in the car. Your task is to determine whether the user, based on the given utterance, wants to be rerouted to a different location or not.
-    
-    User utterance: "{user_utterance}"
-
-    The following example and reasoning steps are provided to help you understand how to make this decision. 
-
-    - Utterance: "I am hungry."
-    - Reasoning Steps:
-        1. The statement expresses a personal feeling of hunger, which is not directly navigational.
-        2. However, expressing hunger while in a car suggests a potential desire to find a place to eat.
-        3. The context and likely intent to find food make it reasonable to interpret this as an indirect navigational request, prompting suggestions for nearby eateries.
-
-    Important: The above examples are provided for guidance. Your task is to only analyze the given user utterance. Please provide your decision below, without including the examples in your response.
-    Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect. 
-    {format_instructions}. Always make sure it is a valid JSON.
-"""
 CoT_context_understanding_prompt_template_one_shot = """
     You are a critical evaluator tasked with determining whether the information provided by a car navigation system (System Block) aligns correctly with the user's expressed needs in user utterance and user context (User Block). 
 
@@ -341,38 +301,6 @@ CoT_context_understanding_prompt_template_one_shot_2 = """
     {format_instructions}. Make sure the output is always a valid Json format.
 """
 
-# 2 navigational and 1 non navigational request
-CoT_implicit_understanding_prompt_template_three_shot = """
-    The context is that the user is currently sitting in the car. Your task is to determine whether the user, based on the given utterance, wants to be rerouted to a different location or not.
-    
-    User utterance: "{user_utterance}"
-
-    The following examples and reasoning steps are provided to help you understand how to make this decision. 
-
-    Example 1:
-    - Utterance: "I am hungry."
-    - Reasoning Steps:
-        1. The statement expresses a personal feeling of hunger, which is not directly navigational.
-        2. However, expressing hunger while in a car suggests a potential desire to find a place to eat.
-        3. The context and likely intent to find food make it reasonable to interpret this as an indirect navigational request, prompting suggestions for nearby eateries.
-
-    Example 2: 
-    - Utterance: "Will I need a coat later?"
-    - Reasoning Steps:
-        1. This question pertains to weather appropriateness and clothing advice, focusing solely on the user's personal preparation for the weather.
-        2. Like the previous example, there is no indication of a need for travel or location information, making it clear that this is not a navigational request.
-
-    Example 3:
-    - Utterance: “My pocket is empty.”
-    - Reasoning Steps: 
-        1. The statement “My pocket is empty” metaphorically indicates that the user has no money or lacks financial resources at the moment.
-        2. The phrase does not directly ask for a location or action but implies a need to access cash, which typically involves visiting an ATM.
-        3. Although the utterance does not explicitly request to be taken to a bank or ATM, it implies a need to withdraw money, making it an indirect navigational utterance where the likely intent is to navigate to the nearest ATM or bank.
-
-    Important: The above examples are provided for guidance. Your task is to only analyze the given user utterance. Please provide your decision below, without including the examples in your response.
-    Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect. 
-    {format_instructions}. Always make sure it is a valid JSON.
-"""
 CoT_context_understanding_prompt_template_three_shot = """
     You are a critical evaluator tasked with determining whether the information provided by a car navigation system (System Block) aligns correctly with the user's expressed needs in user utterance and user context (User Block). 
 
@@ -547,51 +475,7 @@ CoT_context_understanding_prompt_template_three_shot = """
     Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect. 
     {format_instructions}. Make sure the output is always a valid Json format. Make sure the output is always a valid Json format. Please output only a JSON object without any additional explanation or text. Do not include any introductory or concluding remarks!!!
 """
-# 3 navigational and 2 non navigational request
-CoT_implicit_understanding_prompt_template_five_shot = """
-    The context is that the user is currently sitting in the car. Your task is to determine whether the user, based on the given utterance, wants to be rerouted to a different location or not.
-    
-    User utterance: "{user_utterance}"
 
-    The following examples and reasoning steps are provided to help you understand how to make this decision. 
-
-    Example 1:
-    - Utterance: "I am hungry."
-    - Reasoning Steps:
-        1. The statement expresses a personal feeling of hunger, which is not directly navigational.
-        2. However, expressing hunger while in a car suggests a potential desire to find a place to eat.
-        3. The context and likely intent to find food make it reasonable to interpret this as an indirect navigational request, prompting suggestions for nearby eateries.
-
-    Example 2: 
-    - Utterance: "Will I need a coat later?"
-    - Reasoning Steps:
-        1. This question pertains to weather appropriateness and clothing advice, focusing solely on the user's personal preparation for the weather.
-        2. Like the previous example, there is no indication of a need for travel or location information, making it clear that this is not a navigational request.
-
-    Example 3:
-    - Utterance: “My pocket is empty.”
-    - Reasoning Steps: 
-        1. The statement “My pocket is empty” metaphorically indicates that the user has no money or lacks financial resources at the moment.
-        2. The phrase does not directly ask for a location or action but implies a need to access cash, which typically involves visiting an ATM.
-        3. Although the utterance does not explicitly request to be taken to a bank or ATM, it implies a need to withdraw money, making it an indirect navigational utterance where the likely intent is to navigate to the nearest ATM or bank.
-
-    Example 4:
-    - Utterance: “I need a little breeze in here.”
-        1. The statement “I need a little breeze” expresses a desire for more airflow within the vehicle.
-        2. The phrase “in here” indicates that the request is related to the environment inside the car, likely referring to opening a window or adjusting the air conditioning.
-        3. This utterance is non-navigational, as it concerns the comfort and environment within the car rather than any external location or direction. It implies an adjustment of in-car settings rather than a request for navigation.
-
-    Example 5:
-    - Utterance: “I need a spot to crash for the night”
-    - Reasoning Steps: 
-        1. The statement “I am looking for a place for overnight” indicates a need for accommodation, suggesting that the user is searching for a place to sleep.
-        2. The phrase “to stay overnight” implies that the user is seeking a hotel, motel, or another type of lodging, but it does not explicitly request navigation to a specific location.
-        3. While the user does not directly ask to be taken somewhere, the utterance clearly implies a need for navigation to a nearby accommodation
-
-    Important: The above examples are provided for guidance. Your task is to only analyze the given user utterance. Please provide your decision below, without including the examples in your response.
-    Please respond strictly following the format specified below. Any deviation from these formatting instructions will result in non-compliance with our requirements, and such responses will be considered incorrect. 
-    {format_instructions}. Always make sure it is a valid JSON.
-"""
 CoT_context_understanding_prompt_template_five_shot = """
 
     You are a critical evaluator tasked with determining whether the information provided by a car navigation system (System Block) aligns correctly with the user's expressed needs in user utterance and user context (User Block). 
