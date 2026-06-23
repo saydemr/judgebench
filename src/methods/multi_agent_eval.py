@@ -37,7 +37,6 @@ class MultiAgentEvaluation:
     def __init__(
         self,
         agent_llms,
-        testing,
         input_path: Path,
         output_path: Path,
         method,
