@@ -22,7 +22,7 @@ from src.utils.schemas import (
     SystemBlockInput,
     UserBlockInput,
 )
-from .utils.prompts import (
+from src.utils.prompts import (
     cot_1_new,
     cot_3_new,
     cot_5_new,

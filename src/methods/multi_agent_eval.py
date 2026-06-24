@@ -191,7 +191,6 @@ class MultiAgentEvaluation:
                     ("system", prompt_template),
                 ]
             )
-            # print(f'Agent prompt {agent_prompt}')
 
             max_tries = 5
             attempts = 0
@@ -368,7 +367,6 @@ class MultiAgentEvaluation:
         Confidence level transformation function from roundtable paper
         """
         try:
-            # print(x)
             x = float(x)  # Ensure x is a float
 
         except ValueError:
