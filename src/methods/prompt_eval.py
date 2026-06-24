@@ -305,7 +305,7 @@ class PromptEvaluator(BaseEvaluator):
         # Eval finished
         info = {
             "testing_date": datetime.now().strftime("%d/%m/%Y"),
-            "time": self.passed_time(start_time, logging=False),
+            "time": self.passed_time(start_time, logging_format=False),
             "token_count_history": token_count_history,
             "deployment_name": (
                 self.llm.deployment_name

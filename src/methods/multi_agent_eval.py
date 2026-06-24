@@ -526,7 +526,7 @@ class MultiAgentEvaluation(BaseEvaluator):
         # Save important facts and append at the end of list
         info = {
             "testing_date": datetime.now().strftime("%d/%m/%Y"),
-            "time": self.passed_time(start_time, logging=False),
+            "time": self.passed_time(start_time, logging_format=False),
             "token_information": token_count_history,
             "agent_deployment_names": [
                 llm.deployment_name
