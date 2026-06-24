@@ -1,11 +1,9 @@
-import json
 import logging
-import os
-import time
 import traceback
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+import time
 
 import numpy as np
 from azure.ai.inference.models import SystemMessage
@@ -13,6 +11,7 @@ from json_repair import repair_json
 from langchain_classic.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
+from src.methods.base_evaluator import BaseEvaluator
 from src.utils.metrics import calculate_accuracy
 
 from src.utils.schemas import (
@@ -34,7 +33,7 @@ logging.basicConfig(
 )
 
 
-class PromptEvaluator:
+class PromptEvaluator(BaseEvaluator):
     def __init__(
         self,
         llm,
@@ -45,138 +44,12 @@ class PromptEvaluator:
         loops=3,
         cot_shots=1,
     ):
+        super().__init__(input_path, output_path, method)
         self.llm = llm
-        self.method = method
-        self.input_path = input_path
-        self.output_path = output_path
-        self.token_json_path = output_path.parent / Path(
-            output_path.stem + "_token.json"
-        )
         self.self_consistency = self_consistency
         self.loops = loops
         self.cot_shots = cot_shots
 
-    @staticmethod
-    def open_json(file_path):
-        with open(file_path, "r") as file:
-            return json.load(file)
-
-    def passed_time(self, start_time, logging=True):
-        """
-        Calculates passed time for logging
-        """
-        elapsed_time = time.time() - start_time
-        minutes = int(elapsed_time // 60)
-        seconds = int(elapsed_time % 60)
-
-        if logging:
-            return f"{minutes} minutes, {seconds} seconds"
-        else:
-            return {"time_min": minutes, "time_sec": seconds}
-
-    def json_parser_correction(self, input):
-        """
-        Tries to correct common mistakes from LLM output and transform decision strings to boolean
-        """
-        try:
-            # Handle the case where input is wrapped in code block notation ```
-            if input.startswith("```") and input.endswith("```"):
-                input = input.strip("```").strip()
-
-            # Remove 'json\n' prefix if it exists
-            if input.startswith("json\n"):
-                input = input[len("json\n") :]
-
-            # Ensure the input is valid JSON by checking the first and last characters
-            if not (input.startswith("{") and input.endswith("}")):
-                raise ValueError("Input does not appear to be valid JSON.")
-
-            # Load the input JSON
-            answer = json.loads(input)
-
-            # Transform decision
-            if "decision" in answer:
-                if isinstance(answer["decision"], str):
-                    if answer["decision"].lower() == "true":
-                        answer["decision"] = True
-                    elif answer["decision"].lower() == "false":
-                        answer["decision"] = False
-
-        except json.JSONDecodeError as e:
-            logging.error("JSON Decode Error:", e)
-            logging.error("Original content:", input)
-            return None
-
-        return answer
-
-    def append_to_json_file(self, data):
-        """
-        Appends data to a JSON file. If the file does not exist or is empty, creates a new file with the data.
-        """
-        if os.path.exists(self.output_path) and os.path.getsize(self.output_path) > 0:
-            with open(self.output_path, "r+") as file:
-                current_list = json.load(file)
-                current_list.append(data)
-                file.seek(0)
-                json.dump(current_list, file, indent=4)
-        else:
-            with open(self.output_path, "w") as file:
-                json.dump([data], file, indent=4)
-
-    def determine_starting_point(self, dataset_length):
-        """
-        Determine the starting point for evaluation based on existing results.
-        """
-        start_block = 0
-        start_query = 0
-        if os.path.exists(self.output_path) and os.path.getsize(self.output_path) > 0:
-            with open(self.output_path, "r") as file:
-                existing_results = json.load(file)
-                start_block = existing_results[-1]["block_index"]
-                start_query = existing_results[-1]["query_index"] + 1
-
-                if start_query >= 5:
-                    start_query = 0
-                    start_block += 1
-
-            logging.info(
-                f"Starting again from user Block: {start_block}, system block: {start_query}"
-            )
-        else:
-            logging.info(f"Number of blocks: {dataset_length}")
-
-        return start_block, start_query
-
-    def determine_tokens_used(self):
-        if self.token_json_path.exists():
-            return json.load(open(self.token_json_path))
-        else:
-            return {
-                "gpt-35-turbo": {"input_tokens": 0, "output_tokens": 0},
-                "gpt-4": {"input_tokens": 0, "output_tokens": 0},
-                "gpt-4o": {"input_tokens": 0, "output_tokens": 0},
-                "gpt-4.1": {"input_tokens": 0, "output_tokens": 0},
-                "gpt-4o-mini": {"input_tokens": 0, "output_tokens": 0},
-                "o3-mini": {"input_tokens": 0, "output_tokens": 0},
-                "o4-mini": {"input_tokens": 0, "output_tokens": 0},
-                "o3": {"input_tokens": 0, "output_tokens": 0},
-                "o1": {"input_tokens": 0, "output_tokens": 0},
-                "Meta-Llama-3-8B-Instruct": {"input_tokens": 0, "output_tokens": 0},
-                "Meta-Llama-3-405B-Instruct": {"input_tokens": 0, "output_tokens": 0},
-                "mistral-nemo": {"input_tokens": 0, "output_tokens": 0},
-                "mistral-large-2407": {"input_tokens": 0, "output_tokens": 0},
-                "DeepSeek-R1-qcbar": {"input_tokens": 0, "output_tokens": 0},
-                "DeepSeek-V3-0324": {"input_tokens": 0, "output_tokens": 0},
-            }
-
-    def dump_token_usage(self, token_usage, query_index, block_index):
-        token_usage["query_index"] = query_index
-        token_usage["block_index"] = block_index
-
-        json.dump(token_usage, open(self.token_json_path, "w"), indent=4)
-
-
-    # Tests context understanding
     def context_understanding_single_turn(self, user_block, system_block):
         """
         Evaluate a single interaction case between user and system.
