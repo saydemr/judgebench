@@ -71,14 +71,29 @@ class PromptEvaluator(BaseEvaluator):
         # Generate prompt using template and input
         prompt = ChatPromptTemplate.from_template(template=template)
         filled_prompt_template = prompt.format_messages(
-            current_gps_user_block=user_block.current_gps,
+            user_lat=user_block.current_gps.latitude,
+            user_lon=user_block.current_gps.longitude,
+            user_desc=user_block.current_gps.description,
+            
             date=user_block.date,
             time=user_block.time,
             user_utterance=user_block.user_utterance,
             name=system_block.name,
-            current_gps_system_block=system_block.current_gps,
+            
+            system_lat=system_block.current_gps.latitude,
+            system_lon=system_block.current_gps.longitude,
+            system_desc=system_block.current_gps.description,
+            
             cost=system_block.cost,
-            opening_hours=system_block.opening_hours,
+            
+            oh_monday=system_block.opening_hours.monday,
+            oh_tuesday=system_block.opening_hours.tuesday,
+            oh_wednesday=system_block.opening_hours.wednesday,
+            oh_thursday=system_block.opening_hours.thursday,
+            oh_friday=system_block.opening_hours.friday,
+            oh_saturday=system_block.opening_hours.saturday,
+            oh_sunday=system_block.opening_hours.sunday,
+            
             cuisine_type=system_block.cuisine_type,
             menu=system_block.menu,
             rating=system_block.rating,

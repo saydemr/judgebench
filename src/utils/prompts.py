@@ -20,9 +20,9 @@ io_new = """
 
     **User Block:**
     - Location:
-    - Latitude: {current_gps_user_block.latitude}
-    - Longitude: {current_gps_user_block.longitude}
-    - Description: {current_gps_user_block.description}
+    - Latitude: {user_lat}
+    - Longitude: {user_lon}
+    - Description: {user_desc}
     - Date: {date}
     - Time: {time}
     - User Utterance: "{user_utterance}"
@@ -30,21 +30,21 @@ io_new = """
     **System Block:**
     - Restaurant Name: {name}
     - Location: 
-        - Latitude: {current_gps_system_block.latitude}, 
-        - Longitude: {current_gps_system_block.longitude}, 
-        - Description: {current_gps_system_block.description}
+        - Latitude: {system_lat}, 
+        - Longitude: {system_lon}, 
+        - Description: {system_desc}
     - Cuisine Type: {cuisine_type}
     - Menu: {menu}
     - Cost: {cost}
     - Rating: {rating}
     - Opening Hours: 
-        - Monday: {opening_hours.monday}, 
-        - Tuesday: {opening_hours.tuesday}, 
-        - Wednesday: {opening_hours.wednesday}, 
-        - Thursday: {opening_hours.thursday}, 
-        - Friday: {opening_hours.friday},
-        - Saturday: {opening_hours.saturday}, 
-        - Sunday: {opening_hours.sunday},
+        - Monday: {oh_monday}, 
+        - Tuesday: {oh_tuesday}, 
+        - Wednesday: {oh_wednesday}, 
+        - Thursday: {oh_thursday}, 
+        - Friday: {oh_friday},
+        - Saturday: {oh_saturday}, 
+        - Sunday: {oh_sunday},
     - Distance in kilometers: {distance_km},
     - Duration in minutes: {duration_min}
 
@@ -122,9 +122,9 @@ cot_1_new = """
 
     **User Block:**
     - Location:
-    - Latitude: {current_gps_user_block.latitude}
-    - Longitude: {current_gps_user_block.longitude}
-    - Description: {current_gps_user_block.description}
+    - Latitude: {user_lat}
+    - Longitude: {user_lon}
+    - Description: {user_desc}
     - Date: {date}
     - Time: {time}
     - User Utterance: "{user_utterance}"
@@ -132,21 +132,21 @@ cot_1_new = """
     **System Block:**
     - Restaurant Name: {name}
     - Location: 
-        - Latitude: {current_gps_system_block.latitude}, 
-        - Longitude: {current_gps_system_block.longitude}, 
-        - Description: {current_gps_system_block.description}
+        - Latitude: {system_lat}, 
+        - Longitude: {system_lon},
+        - Description: {system_desc}
     - Cuisine Type: {cuisine_type}
     - Menu: {menu}
     - Cost: {cost}
     - Rating: {rating}
     - Opening Hours: 
-        - Monday: {opening_hours.monday}, 
-        - Tuesday: {opening_hours.tuesday}, 
-        - Wednesday: {opening_hours.wednesday}, 
-        - Thursday: {opening_hours.thursday}, 
-        - Friday: {opening_hours.friday},
-        - Saturday: {opening_hours.saturday}, 
-        - Sunday: {opening_hours.sunday},
+        - Monday: {oh_monday},
+        - Tuesday: {oh_tuesday},
+        - Wednesday: {oh_wednesday},
+        - Thursday: {oh_thursday},
+        - Friday: {oh_friday},
+        - Saturday: {oh_saturday},
+        - Sunday: {oh_sunday},
     - Distance in kilometers: {distance_km},
     - Duration in minutes: {duration_min}
 
@@ -309,9 +309,9 @@ cot_3_new = """
 
     **User Block:**
     - Location:
-    - Latitude: {current_gps_user_block.latitude}
-    - Longitude: {current_gps_user_block.longitude}
-    - Description: {current_gps_user_block.description}
+        - Latitude: {user_lat}
+        - Longitude: {user_lon}
+        - Description: {user_desc}
     - Date: {date}
     - Time: {time}
     - User Utterance: "{user_utterance}"
@@ -319,21 +319,21 @@ cot_3_new = """
     **System Block:**
     - Restaurant Name: {name}
     - Location: 
-        - Latitude: {current_gps_system_block.latitude}, 
-        - Longitude: {current_gps_system_block.longitude}, 
-        - Description: {current_gps_system_block.description}
+        - Latitude: {system_lat}, 
+        - Longitude: {system_lon}, 
+        - Description: {system_desc}
     - Cuisine Type: {cuisine_type}
     - Menu: {menu}
     - Cost: {cost}
     - Rating: {rating}
     - Opening Hours: 
-        - Monday: {opening_hours.monday}, 
-        - Tuesday: {opening_hours.tuesday}, 
-        - Wednesday: {opening_hours.wednesday}, 
-        - Thursday: {opening_hours.thursday}, 
-        - Friday: {opening_hours.friday},
-        - Saturday: {opening_hours.saturday}, 
-        - Sunday: {opening_hours.sunday},
+        - Monday: {oh_monday},
+        - Tuesday: {oh_tuesday},
+        - Wednesday: {oh_wednesday},
+        - Thursday: {oh_thursday},
+        - Friday: {oh_friday},
+        - Saturday: {oh_saturday},
+        - Sunday: {oh_sunday},
     - Distance in kilometers: {distance_km},
     - Duration in minutes: {duration_min}
 
@@ -582,9 +582,9 @@ cot_5_new = """
 
     **User Block:**
     - Location:
-    - Latitude: {current_gps_user_block.latitude}
-    - Longitude: {current_gps_user_block.longitude}
-    - Description: {current_gps_user_block.description}
+    - Latitude: {user_lat}
+    - Longitude: {user_lon}
+    - Description: {user_desc}
     - Date: {date}
     - Time: {time}
     - User Utterance: "{user_utterance}"
@@ -592,21 +592,21 @@ cot_5_new = """
     **System Block:**
     - Restaurant Name: {name}
     - Location: 
-        - Latitude: {current_gps_system_block.latitude}, 
-        - Longitude: {current_gps_system_block.longitude}, 
-        - Description: {current_gps_system_block.description}
+        - Latitude: {system_lat}, 
+        - Longitude: {system_lon}, 
+        - Description: {system_desc}
     - Cuisine Type: {cuisine_type}
     - Menu: {menu}
     - Cost: {cost}
     - Rating: {rating}
     - Opening Hours: 
-        - Monday: {opening_hours.monday}, 
-        - Tuesday: {opening_hours.tuesday}, 
-        - Wednesday: {opening_hours.wednesday}, 
-        - Thursday: {opening_hours.thursday}, 
-        - Friday: {opening_hours.friday},
-        - Saturday: {opening_hours.saturday}, 
-        - Sunday: {opening_hours.sunday},
+        - Monday: {oh_monday}, 
+        - Tuesday: {oh_tuesday}, 
+        - Wednesday: {oh_wednesday}, 
+        - Thursday: {oh_thursday}, 
+        - Friday: {oh_friday},
+        - Saturday: {oh_saturday}, 
+        - Sunday: {oh_sunday},
     - Distance in kilometers: {distance_km},
     - Duration in minutes: {duration_min}
 
