@@ -136,13 +136,6 @@ def main():
         output_path = results_dir / dataset_name / output_filename
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Ensure unique filename by appending _2, _3, etc., if necessary
-        # file_number = 1
-        # while os.path.exists(output_path):
-        #     file_number += 1
-        #     output_filename = f"{method_shortcut}{shots_suffix}_{args.model}_{args.temp}_results{file_number}.json"
-        #     output_path = results_dir / dataset_name / output_filename
-
         print(f"Results will be saved to: {output_path}")
 
         # Initialize model manager using create_chat_model
@@ -244,7 +237,6 @@ def main():
             discussion_loops = args.discussion_loops
             method_shortcut = "AR"
 
-        # output_filename = f"{method_shortcut}_{'+'.join(agent_llms)}_{(str(agent_temps[0]) + '+') * 2 + str(agent_temps[0])}_results.json"
         output_filename = (
             f"{method_shortcut}_{str(agent_llms[0])}_{str(agent_temps[0])}_results.json"
         )
