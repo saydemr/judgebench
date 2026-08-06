@@ -1,5 +1,26 @@
-# Contextual Benchmarking Evaluation Code
+# Benchmarking Contextual Understanding for In-Car Conversational Systems
 
-Minimal and cleaner code of the paper [Benchmarking contextual understanding for in-car conversational systems](https://arxiv.org/abs/2512.12042) from one of the co-authors.
+This repository contains the dataset, codebase, and evaluation framework for the paper:
+**"Benchmarking contextual understanding for in-car conversational systems"**  
+*Authors:* Philipp Habicht, Lev Sorokin, Abdullah Saydemir, Ken E. Friedl, Andrea Stocco.
 
-Original repo can be found [here](https://github.com/JUDGE-Bench/code). Note that that repo contains **a lot of stale code**, which is not needed for reproducing the results in the paper. It also **lacks the scripts** to run the experiments. This repo contains only the necessary and sufficient code to reproduce the results.
+
+> **Note on Implementation:** This single, unified repository provides the minimal, verified codebase and end-to-end execution scripts required to reproduce the paper's exact benchmark results. Unlike development or legacy repositories, it eliminates stale dependencies and contains strictly the necessary code, scripts, and datasets needed for lightweight execution.
+
+
+## Citation
+```bibtex
+@misc{habicht2025benchmarking,
+  title = {Benchmarking Contextual Understanding for In-Car Conversational Systems},
+  author = {Philipp Habicht and Lev Sorokin and Abdullah Saydemir and Ken Friedl and Andrea Stocco},
+  journal = {Journal of Systems and Software},
+  volume = {240},
+  pages = {112915},
+  year = {2026},
+  issn = {0164-1212},
+  url = {https://www.sciencedirect.com/science/article/pii/S0164121226001482},
+  google_scholar_id={qjMakFHDy7sC},
+  code={https://github.com/saydemr/judgebench},
+  pdf={https://www.sciencedirect.com/science/article/pii/S0164121226001482/pdfft},
+}
+```
