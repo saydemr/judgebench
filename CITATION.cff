@@ -41,4 +41,4 @@ preferred-citation:
   issn: "0164-1212"
   doi: "10.1016/j.jss.2026.112915"
   url: "https://www.sciencedirect.com/science/article/pii/S0164121226001482"
-  repository-code: "https://github.com/saydemr/judgebench"
+  code: "https://github.com/saydemr/judgebench"
