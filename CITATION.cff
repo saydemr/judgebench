@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "Benchmarking contextual understanding for in-car conversational systems"
+message: "If you use this dataset or code, please cite the corresponding journal paper."
+type: article
+authors:
+  - family-names: "Habicht"
+    given-names: "Philipp"
+  - family-names: "Sorokin"
+    given-names: "Lev"
+  - family-names: "Saydemir"
+    given-names: "Abdullah"
+  - family-names: "Friedl"
+    given-names: "Ken"
+  - family-names: "Stocco"
+    given-names: "Andrea"
+journal: "Journal of Systems and Software"
+volume: 240
+pages: "112915"
+year: 2026
+issn: "0164-1212"
+doi: "10.1016/j.jss.2026.112915"
+url: "https://www.sciencedirect.com/science/article/pii/S0164121226001482"
+repository-code: "https://github.com/saydemr/judgebench"
+keywords:
+  - "Conversational systems"
+  - "Large language models"
+  - "Multi-agent systems"
+  - "Question answering"
+  - "Contextual understanding"
+  - "Benchmarking"
