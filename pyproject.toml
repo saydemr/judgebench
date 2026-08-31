@@ -1,11 +1,3 @@
-[build-system]
-requires = ["uv_build>=0.11.23,<0.12"]
-build-backend = "uv_build"
-
-[tool.uv.build-backend]
-module-name = "src"
-module-root = ""
-
 [project]
 name = "judgebench"
 version = "0.1.0"
@@ -14,25 +6,34 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "azure-ai-inference>=1.0.0b9",
-    "azure-ai-ml>=1.30.0",
-    "fastapi>=0.128.0",
-    "json-repair>=0.54.3",
-    "langchain>=1.2.0",
-    "langchain-community>=0.4.1",
-    "langchain-deepseek>=1.0.1",
-    "langchain-openai>=1.1.6",
-    "langgraph>=1.0.5",
-    "langsmith>=0.5.1",
-    "matplotlib>=3.10.8",
-    "nbformat>=5.10.4",
-    "numpy>=2.4.0",
-    "openai>=2.14.0",
-    "pandas>=2.3.3",
-    "plotly>=6.5.0",
-    "pydantic>=2.12.5",
-    "python-dotenv>=0.19.0",
-    "requests>=2.32.5",
+    "azure-ai-ml>=1.34.1",
+    "fastapi>=0.141.1",
+    "json-repair>=0.63.4",
+    "langchain>=1.3.18",
+    "langchain-community>=0.4.2",
+    "langchain-deepseek>=1.1.0",
+    "langchain-openai>=1.6.0",
+    "langgraph>=1.2.11",
+    "langsmith>=0.11.2",
+    "matplotlib>=3.11.1",
+    "nbformat>=5.11.1",
+    "numpy>=2.5.2",
+    "openai>=3.6.0",
+    "pandas>=3.0.5",
+    "plotly>=7.0.0",
+    "pydantic>=2.13.5",
+    "python-dotenv>=1.2.3",
+    "requests>=2.34.2",
     "seaborn>=0.13.2",
-    "streamlit>=1.52.2",
-    "uvicorn>=0.40.0",
+    "streamlit>=1.62.0",
+    "uvicorn>=0.52.4",
 ]
+
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""
