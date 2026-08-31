@@ -5,6 +5,7 @@ This repository contains the dataset, codebase, and evaluation framework for the
 *Authors:* Philipp Habicht, Lev Sorokin, Abdullah Saydemir, Ken E. Friedl, Andrea Stocco.
 
 
+> [!NOTE]
 > **Note on Implementation:** This single, unified repository provides the minimal, verified codebase and end-to-end execution scripts required to reproduce the paper's exact benchmark results. Unlike development or legacy repositories, it eliminates stale dependencies and contains strictly the necessary code, scripts, and datasets needed for lightweight execution.
 
 
